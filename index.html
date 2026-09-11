@@ -227,6 +227,35 @@
 
   /* ---------- breakdown ---------- */
 
+  .breakdown-details {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+  }
+
+  .breakdown-details summary {
+    cursor: pointer;
+    font-family: "Noto Serif TC", serif;
+    font-weight: 700;
+    font-size: 14.5px;
+    color: var(--ink);
+    list-style: none;
+  }
+
+  .breakdown-details summary::-webkit-details-marker { display: none; }
+
+  .breakdown-details summary::before {
+    content: "▸";
+    display: inline-block;
+    margin-right: 6px;
+    color: var(--accent);
+    transition: transform 0.15s ease;
+  }
+
+  .breakdown-details[open] summary::before {
+    transform: rotate(90deg);
+  }
+
   .breakdown-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -596,12 +625,12 @@
     <div id="heroBody">
       <p class="hero-empty">載入中…</p>
     </div>
-  </section>
 
-  <section class="card">
-    <h2>各時段人數</h2>
-    <p class="sub" style="margin-bottom:14px;">數字是「這個時段」可以的人數(實體 + 線上分開算)。框起來的格子是目前最高。</p>
-    <div class="breakdown-grid" id="breakdownGrid"></div>
+    <details class="breakdown-details">
+      <summary>各時段人數</summary>
+      <p class="sub" style="margin: 10px 0 14px;">數字是「這個時段」可以的人數(實體 + 線上分開算)。框起來的格子是目前最高。</p>
+      <div class="breakdown-grid" id="breakdownGrid"></div>
+    </details>
   </section>
 
   <section class="card">
