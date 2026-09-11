@@ -1155,18 +1155,34 @@
     try {
       firebase.initializeApp(FIREBASE_CONFIG);
       db = firebase.firestore();
+      db.settings({
+        experimentalAutoDetectLongPolling: true,
+        useFetchStreams: false,
+      });
     } catch (e) {
       dbBanner.hidden = false;
       dbBanner.textContent = "資料庫初始化失敗,請重新整理頁面。";
       renderResults([]);
       return;
     }
+    let connected = false;
+    const slowTimer = setTimeout(() => {
+      if (!connected) {
+        dbBanner.hidden = false;
+        dbBanner.textContent = "連線比較慢,還在嘗試連上資料庫…如果超過一分鐘都沒反應,請重新整理頁面。";
+      }
+    }, 6000);
+
     db.collection("responses").onSnapshot(
       (snap) => {
+        connected = true;
+        clearTimeout(slowTimer);
+        dbBanner.hidden = true;
         latestSnapshotDocs = snap.docs.map((d) => d.data());
         renderResults(latestSnapshotDocs);
       },
       (err) => {
+        clearTimeout(slowTimer);
         dbBanner.hidden = false;
         dbBanner.textContent = "即時同步發生問題(" + err.code + "),請重新整理頁面。";
       }
