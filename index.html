@@ -154,11 +154,22 @@
     margin: 0 0 10px;
   }
 
+  .hero-rank {
+    margin-bottom: 14px;
+  }
+
+  .hero-rank-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink-soft);
+    margin: 0 0 6px;
+  }
+
   .hero-slots {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
-    margin-bottom: 12px;
+    margin-bottom: 0;
   }
 
   .hero-slot {
@@ -581,7 +592,7 @@
   <div id="dbBanner" class="banner" hidden></div>
 
   <section class="hero" id="heroSection">
-    <p class="hero-label">實體交集最高</p>
+    <p class="hero-label">實體交集前二高</p>
     <div id="heroBody">
       <p class="hero-empty">載入中…</p>
     </div>
@@ -1056,12 +1067,38 @@
     return counts;
   }
 
+  function buildHeroSlotEl(dayKey, timeKey, count, counts) {
+    const onlineCount = counts[dayKey + "|" + timeKey + "|online"] || 0;
+    const el = document.createElement("span");
+    el.className = "hero-slot";
+    let html =
+      '<span class="main">' +
+      heroSlotLabel(dayKey, timeKey) +
+      ' <span class="n">' +
+      count +
+      " 人</span></span>";
+    if (onlineCount > 0) {
+      html +=
+        '<span class="also-online">同時段線上另有 <span class="n">' +
+        onlineCount +
+        " 人</span>可以</span>";
+    }
+    el.innerHTML = html;
+    return el;
+  }
+
   function renderResults(docs) {
     const counts = computeCounts(docs);
     const total = docs.length;
     const onsiteKeys = Object.keys(counts).filter((k) => k.endsWith("|onsite"));
-    const maxOnsite = Math.max(0, ...onsiteKeys.map((k) => counts[k]));
     const maxCount = Math.max(0, ...Object.values(counts));
+
+    const distinctOnsiteCounts = Array.from(
+      new Set(onsiteKeys.map((k) => counts[k]))
+    )
+      .filter((c) => c > 0)
+      .sort((a, b) => b - a)
+      .slice(0, 2);
 
     heroBody.innerHTML = "";
     if (total === 0) {
@@ -1069,37 +1106,32 @@
       p.className = "hero-empty";
       p.textContent = "尚無人填寫,等待大家勾選時間。";
       heroBody.appendChild(p);
-    } else if (maxOnsite === 0) {
+    } else if (distinctOnsiteCounts.length === 0) {
       const p = document.createElement("p");
       p.className = "hero-empty";
       p.textContent = "目前還沒有人可以實體出席。";
       heroBody.appendChild(p);
     } else {
-      const slotsWrap = document.createElement("div");
-      slotsWrap.className = "hero-slots";
-      onsiteKeys
-        .filter((k) => counts[k] === maxOnsite)
-        .forEach((k) => {
-          const [dayKey, timeKey] = k.split("|");
-          const onlineCount = counts[dayKey + "|" + timeKey + "|online"] || 0;
-          const el = document.createElement("span");
-          el.className = "hero-slot";
-          let html =
-            '<span class="main">' +
-            heroSlotLabel(dayKey, timeKey) +
-            ' <span class="n">' +
-            maxOnsite +
-            " 人</span></span>";
-          if (onlineCount > 0) {
-            html +=
-              '<span class="also-online">同時段線上另有 <span class="n">' +
-              onlineCount +
-              " 人</span>可以</span>";
-          }
-          el.innerHTML = html;
-          slotsWrap.appendChild(el);
-        });
-      heroBody.appendChild(slotsWrap);
+      const rankLabels = ["最高", "次高"];
+      distinctOnsiteCounts.forEach((c, i) => {
+        const rankWrap = document.createElement("div");
+        rankWrap.className = "hero-rank";
+        const rankLabel = document.createElement("p");
+        rankLabel.className = "hero-rank-label";
+        rankLabel.textContent = rankLabels[i];
+        rankWrap.appendChild(rankLabel);
+
+        const slotsWrap = document.createElement("div");
+        slotsWrap.className = "hero-slots";
+        onsiteKeys
+          .filter((k) => counts[k] === c)
+          .forEach((k) => {
+            const [dayKey, timeKey] = k.split("|");
+            slotsWrap.appendChild(buildHeroSlotEl(dayKey, timeKey, c, counts));
+          });
+        rankWrap.appendChild(slotsWrap);
+        heroBody.appendChild(rankWrap);
+      });
     }
     const meta = document.createElement("p");
     meta.className = "hero-meta";
