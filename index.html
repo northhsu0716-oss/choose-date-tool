@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI家教時間統計</title>
+<meta name="description" content="每週共同時間投票工具:選名字、勾選方便的星期/時段/形式,即時看到大家交集最高的時間。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg: #f4f5f0;
+    --surface: #ffffff;
+    --surface-2: #eceee7;
+    --ink: #1b211d;
+    --ink-soft: #5c655e;
+    --ink-faint: #8b948c;
+    --line: #dadfd6;
+    --accent: #2f6f5e;
+    --accent-strong: #1f5648;
+    --accent-ink: #ffffff;
+    --accent-soft: #e1efe9;
+    --accent-rgb: 47, 111, 94;
+    --warn: #a24b2f;
+    --warn-soft: #f6e6de;
+    --shadow: 0 1px 2px rgba(20, 30, 25, 0.04), 0 8px 24px rgba(20, 30, 25, 0.06);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12160f13;
+      --bg: #141814;
+      --surface: #1b211c;
+      --surface-2: #232a23;
+      --ink: #eef1ec;
+      --ink-soft: #a9b3ac;
+      --ink-faint: #6f7972;
+      --line: #333c34;
+      --accent: #55bd9b;
+      --accent-strong: #79d3b5;
+      --accent-ink: #0c1511;
+      --accent-soft: #1e3129;
+      --accent-rgb: 85, 189, 155;
+      --warn: #e08a63;
+      --warn-soft: #3a271e;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #141814;
+    --surface: #1b211c;
+    --surface-2: #232a23;
+    --ink: #eef1ec;
+    --ink-soft: #a9b3ac;
+    --ink-faint: #6f7972;
+    --line: #333c34;
+    --accent: #55bd9b;
+    --accent-strong: #79d3b5;
+    --accent-ink: #0c1511;
+    --accent-soft: #1e3129;
+    --accent-rgb: 85, 189, 155;
+    --warn: #e08a63;
+    --warn-soft: #3a271e;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    line-height: 1.5;
+  }
+
+  .page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 40px 20px 64px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  .eyebrow {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 8px;
+  }
+
+  h1 {
+    font-family: "Noto Serif TC", serif;
+    font-weight: 700;
+    font-size: clamp(24px, 4.5vw, 32px);
+    line-height: 1.3;
+    margin: 0 0 10px;
+    text-wrap: balance;
+    color: var(--ink);
+  }
+
+  .sub {
+    color: var(--ink-soft);
+    font-size: 14.5px;
+    max-width: 56ch;
+    margin: 0;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 22px;
+    box-shadow: var(--shadow);
+  }
+
+  h2 {
+    font-family: "Noto Serif TC", serif;
+    font-size: 17px;
+    font-weight: 700;
+    margin: 0 0 4px;
+  }
+
+  h3 {
+    font-family: "Noto Sans TC", sans-serif;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--ink-soft);
+    margin: 0 0 12px;
+    letter-spacing: 0.02em;
+  }
+
+  /* ---------- hero result ---------- */
+
+  .hero {
+    background: linear-gradient(165deg, var(--accent-soft), var(--surface) 70%);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 26px 24px;
+    box-shadow: var(--shadow);
+  }
+
+  .hero-label {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent-strong);
+    margin: 0 0 10px;
+  }
+
+  .hero-slots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .hero-slot {
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    border-radius: 12px;
+    padding: 10px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .hero-slot .main {
+    font-family: "Noto Serif TC", serif;
+    font-weight: 700;
+    font-size: clamp(18px, 4vw, 23px);
+    color: var(--ink);
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .hero-slot .n {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--accent-strong);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .hero-slot .also-online {
+    font-family: "Noto Sans TC", sans-serif;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--ink-soft);
+  }
+
+  .hero-slot .also-online .n {
+    font-size: 12.5px;
+    color: var(--ink-soft);
+  }
+
+  .hero-empty {
+    font-size: 15px;
+    color: var(--ink-soft);
+    font-style: normal;
+  }
+
+  .hero-meta {
+    font-size: 13px;
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------- breakdown ---------- */
+
+  .breakdown-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+  }
+
+  .day-card {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 12px;
+    background: var(--surface-2);
+  }
+
+  .day-card .day-title {
+    font-family: "Noto Serif TC", serif;
+    font-weight: 700;
+    font-size: 14px;
+    margin: 0 0 8px;
+  }
+
+  .cell-grid {
+    display: grid;
+    grid-template-columns: auto 1fr 1fr;
+    gap: 4px 6px;
+    align-items: center;
+    font-size: 12px;
+  }
+
+  .cell-grid .col-head {
+    font-size: 10.5px;
+    color: var(--ink-faint);
+    text-align: center;
+  }
+
+  .cell-grid .row-head {
+    color: var(--ink-soft);
+    font-size: 11.5px;
+    padding-right: 2px;
+  }
+
+  .cell {
+    border-radius: 8px;
+    padding: 6px 4px;
+    text-align: center;
+    font-family: "IBM Plex Mono", monospace;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--ink);
+    background: var(--surface);
+    border: 1px solid transparent;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .cell.is-top {
+    border-color: var(--accent);
+    color: var(--accent-strong);
+    box-shadow: 0 0 0 1px var(--accent) inset;
+  }
+
+  /* ---------- form ---------- */
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 18px;
+  }
+
+  label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-soft);
+  }
+
+  select {
+    font: inherit;
+    font-size: 15px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink);
+    max-width: 260px;
+  }
+
+  textarea {
+    font: inherit;
+    font-size: 14.5px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink);
+    resize: vertical;
+    width: 100%;
+  }
+
+  .notes-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .notes-list li {
+    border: 1px solid var(--line);
+    background: var(--surface-2);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 13.5px;
+  }
+
+  .notes-list .note-name {
+    font-family: "Noto Serif TC", serif;
+    font-weight: 700;
+    color: var(--accent-strong);
+    margin-right: 6px;
+  }
+
+  .notes-list .note-text {
+    color: var(--ink);
+    white-space: pre-wrap;
+  }
+
+  .step {
+    margin-bottom: 20px;
+  }
+
+  .pass-field {
+    margin-bottom: 16px;
+  }
+
+  .pass-check {
+    width: fit-content;
+    font-weight: 600;
+  }
+
+  .day-row {
+    display: grid;
+    grid-template-columns: 56px 1fr 1fr;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .day-row:last-child { border-bottom: none; }
+
+  .day-row .day-name {
+    font-family: "Noto Serif TC", serif;
+    font-weight: 700;
+    font-size: 14px;
+  }
+
+  .check {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13.5px;
+    color: var(--ink);
+    cursor: pointer;
+    padding: 6px 8px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    user-select: none;
+  }
+
+  .check:has(input:checked) {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--accent-strong);
+    font-weight: 600;
+  }
+
+  .check input {
+    accent-color: var(--accent);
+    width: 15px;
+    height: 15px;
+  }
+
+  #timeStep .day-row { grid-template-columns: 56px 1fr 1fr; }
+
+  .warn-msg {
+    color: var(--warn);
+    background: var(--warn-soft);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 13px;
+    margin-bottom: 14px;
+  }
+
+  button.primary {
+    font: inherit;
+    font-weight: 700;
+    font-size: 14.5px;
+    color: var(--accent-ink);
+    background: var(--accent);
+    border: none;
+    border-radius: 10px;
+    padding: 12px 20px;
+    cursor: pointer;
+  }
+
+  button.primary:hover { background: var(--accent-strong); }
+  button.primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .status-msg {
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin-top: 10px;
+    min-height: 1.2em;
+  }
+
+  .status-msg.ok { color: var(--accent-strong); font-weight: 600; }
+
+  /* ---------- reset corner switch ---------- */
+
+  .reset-fab {
+    position: fixed;
+    top: 14px;
+    right: 14px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink-faint);
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+    z-index: 20;
+  }
+
+  .reset-fab:hover {
+    color: var(--warn);
+    border-color: var(--warn);
+  }
+
+  .reset-fab-status {
+    position: fixed;
+    top: 54px;
+    right: 14px;
+    max-width: 200px;
+    font-size: 12px;
+    color: var(--ink-soft);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 6px 10px;
+    box-shadow: var(--shadow);
+    z-index: 20;
+  }
+
+  .banner {
+    background: var(--warn-soft);
+    color: var(--warn);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+
+  /* ---------- reset modal ---------- */
+
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 14, 11, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 30;
+  }
+
+  .modal-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 22px;
+    max-width: 320px;
+    width: 100%;
+    box-shadow: var(--shadow);
+  }
+
+  .modal-title {
+    font-family: "Noto Serif TC", serif;
+    font-weight: 700;
+    font-size: 16px;
+    margin: 0 0 8px;
+  }
+
+  .modal-desc {
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin: 0 0 14px;
+  }
+
+  .modal-card input[type="password"] {
+    font: inherit;
+    font-size: 15px;
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink);
+    margin-bottom: 10px;
+  }
+
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .btn-secondary {
+    font: inherit;
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px 14px;
+    cursor: pointer;
+  }
+
+  .btn-danger {
+    font: inherit;
+    font-weight: 700;
+    font-size: 13.5px;
+    color: var(--warn);
+    background: var(--warn-soft);
+    border: 1px solid var(--warn);
+    border-radius: 8px;
+    padding: 8px 14px;
+    cursor: pointer;
+  }
+
+  .btn-danger.armed {
+    background: var(--warn);
+    color: var(--surface);
+  }
+
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <header>
+    <p class="eyebrow">每週共同時間投票</p>
+    <h1>這週,大家什麼時候都能到?</h1>
+    <p class="sub">選你的名字,勾選這週方便的星期、實體或線上、上午或下午。大家填完後,下面會即時算出交集最高的時段。</p>
+  </header>
+
+  <div id="dbBanner" class="banner" hidden></div>
+
+  <section class="hero" id="heroSection">
+    <p class="hero-label">實體交集最高</p>
+    <div id="heroBody">
+      <p class="hero-empty">載入中…</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>各時段人數</h2>
+    <p class="sub" style="margin-bottom:14px;">數字是「這個時段」可以的人數(實體 + 線上分開算)。框起來的格子是目前最高。</p>
+    <div class="breakdown-grid" id="breakdownGrid"></div>
+  </section>
+
+  <section class="card">
+    <h2>填寫我的時間</h2>
+    <div class="field">
+      <label for="nameSelect">你是</label>
+      <select id="nameSelect">
+        <option value="">請選擇你的名字</option>
+      </select>
+    </div>
+
+    <div id="formBody" hidden>
+      <div class="field pass-field">
+        <label class="check pass-check">
+          <input type="checkbox" id="passCheckbox" />
+          這週整週都不行(pass)
+        </label>
+      </div>
+
+      <div id="availabilitySteps">
+        <div class="step">
+          <h3>Step 1 · 哪幾天、用什麼方式</h3>
+          <div id="dayModeGrid"></div>
+        </div>
+
+        <div class="step" id="timeStepWrap" hidden>
+          <h3>Step 2 · 那幾天的上午還是下午</h3>
+          <div id="timeGrid"></div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="noteInput">備註(選填)</label>
+        <textarea id="noteInput" rows="2" placeholder="例如:週三下午 3 點後才有空、週五上午 10 點前要離開"></textarea>
+      </div>
+
+      <p class="warn-msg" id="warnMsg" hidden></p>
+      <button class="primary" id="submitBtn">送出我的時間</button>
+      <p class="status-msg" id="formStatus"></p>
+    </div>
+  </section>
+
+</div>
+
+<button id="resetFab" class="reset-fab" title="管理者工具" aria-label="管理者工具">⟳</button>
+<p id="resetFabStatus" class="reset-fab-status" hidden></p>
+
+<div id="resetModal" class="modal-overlay" hidden>
+  <div class="modal-card">
+    <div id="adminLockStep">
+      <p class="modal-title">管理者工具</p>
+      <p class="modal-desc">輸入密碼查看大家的備註,或重置本週資料。</p>
+      <input type="password" id="resetPassInput" placeholder="密碼" autocomplete="off" />
+      <p class="status-msg" id="resetModalStatus"></p>
+      <div class="modal-actions">
+        <button class="btn-secondary" id="resetCancelBtn">取消</button>
+        <button class="btn-danger" id="resetConfirmBtn">確認</button>
+      </div>
+    </div>
+
+    <div id="adminPanelStep" hidden>
+      <p class="modal-title">大家的備註</p>
+      <ul class="notes-list" id="notesList"></ul>
+      <p class="hero-empty" id="notesEmpty" hidden>目前沒有人填寫備註。</p>
+      <div class="modal-actions" style="justify-content: space-between; margin-top: 16px;">
+        <button class="btn-secondary" id="adminCloseBtn">關閉</button>
+        <button class="btn-danger" id="resetActionBtn">重置本週資料</button>
+      </div>
+      <p class="status-msg" id="adminStatus"></p>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+
+<script>
+(function () {
+  const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyCYL7xm6WGqhxZAGydNPyIN8nu45KBbjjQ",
+    authDomain: "choose-date-tool.firebaseapp.com",
+    projectId: "choose-date-tool",
+    storageBucket: "choose-date-tool.firebasestorage.app",
+    messagingSenderId: "449986805953",
+    appId: "1:449986805953:web:204bf7533ef46907f09440",
+  };
+
+  const ROSTER = [
+    { id: "james", name: "james" },
+    { id: "shiny", name: "shiny" },
+    { id: "dayu", name: "大瑜" },
+    { id: "xiaoyu", name: "小瑜" },
+    { id: "wenxin", name: "紋欣" },
+    { id: "byrnn", name: "byrnn" },
+    { id: "xuanmin", name: "瑄敏" },
+    { id: "zhiyuan", name: "致遠" },
+  ];
+
+  const DAYS = [
+    { key: "mon", label: "週一" },
+    { key: "tue", label: "週二" },
+    { key: "wed", label: "週三" },
+    { key: "thu", label: "週四" },
+    { key: "fri", label: "週五" },
+  ];
+  const MODES = [
+    { key: "onsite", label: "實體" },
+    { key: "online", label: "線上" },
+  ];
+  const TIMES = [
+    { key: "am", label: "上午" },
+    { key: "pm", label: "下午" },
+  ];
+
+  const nameSelect = document.getElementById("nameSelect");
+  const formBody = document.getElementById("formBody");
+  const passCheckbox = document.getElementById("passCheckbox");
+  const availabilitySteps = document.getElementById("availabilitySteps");
+  const dayModeGrid = document.getElementById("dayModeGrid");
+  const timeStepWrap = document.getElementById("timeStepWrap");
+  const timeGrid = document.getElementById("timeGrid");
+  const warnMsg = document.getElementById("warnMsg");
+  const noteInput = document.getElementById("noteInput");
+  const submitBtn = document.getElementById("submitBtn");
+  const formStatus = document.getElementById("formStatus");
+  const heroBody = document.getElementById("heroBody");
+  const breakdownGrid = document.getElementById("breakdownGrid");
+  const notesList = document.getElementById("notesList");
+  const notesEmpty = document.getElementById("notesEmpty");
+  const dbBanner = document.getElementById("dbBanner");
+  const resetFab = document.getElementById("resetFab");
+  const resetFabStatus = document.getElementById("resetFabStatus");
+  const resetModal = document.getElementById("resetModal");
+  const adminLockStep = document.getElementById("adminLockStep");
+  const adminPanelStep = document.getElementById("adminPanelStep");
+  const resetPassInput = document.getElementById("resetPassInput");
+  const resetModalStatus = document.getElementById("resetModalStatus");
+  const resetCancelBtn = document.getElementById("resetCancelBtn");
+  const resetConfirmBtn = document.getElementById("resetConfirmBtn");
+  const adminCloseBtn = document.getElementById("adminCloseBtn");
+  const resetActionBtn = document.getElementById("resetActionBtn");
+  const adminStatus = document.getElementById("adminStatus");
+  const RESET_PASSWORD = "82880094";
+
+  ROSTER.forEach((p) => {
+    const opt = document.createElement("option");
+    opt.value = p.id;
+    opt.textContent = p.name;
+    nameSelect.appendChild(opt);
+  });
+
+  function blankState() {
+    const s = {};
+    DAYS.forEach((d) => {
+      s[d.key] = { onsite: false, online: false, am: false, pm: false };
+    });
+    return s;
+  }
+
+  let formState = blankState();
+  let currentPerson = null;
+  let db = null;
+  let latestSnapshotDocs = [];
+
+  function renderDayModeGrid() {
+    dayModeGrid.innerHTML = "";
+    DAYS.forEach((d) => {
+      const row = document.createElement("div");
+      row.className = "day-row";
+      const dayName = document.createElement("span");
+      dayName.className = "day-name";
+      dayName.textContent = d.label;
+      row.appendChild(dayName);
+      MODES.forEach((m) => {
+        const label = document.createElement("label");
+        label.className = "check";
+        const input = document.createElement("input");
+        input.type = "checkbox";
+        input.checked = formState[d.key][m.key];
+        input.addEventListener("change", () => {
+          formState[d.key][m.key] = input.checked;
+          renderTimeGrid();
+        });
+        label.appendChild(input);
+        label.appendChild(document.createTextNode(m.label));
+        row.appendChild(label);
+      });
+      dayModeGrid.appendChild(row);
+    });
+  }
+
+  function dayIncluded(dayKey) {
+    return formState[dayKey].onsite || formState[dayKey].online;
+  }
+
+  function renderTimeGrid() {
+    timeGrid.innerHTML = "";
+    const activeDays = DAYS.filter((d) => dayIncluded(d.key));
+    timeStepWrap.hidden = activeDays.length === 0;
+    activeDays.forEach((d) => {
+      const row = document.createElement("div");
+      row.className = "day-row";
+      const dayName = document.createElement("span");
+      dayName.className = "day-name";
+      dayName.textContent = d.label;
+      row.appendChild(dayName);
+      TIMES.forEach((t) => {
+        const label = document.createElement("label");
+        label.className = "check";
+        const input = document.createElement("input");
+        input.type = "checkbox";
+        input.checked = formState[d.key][t.key];
+        input.addEventListener("change", () => {
+          formState[d.key][t.key] = input.checked;
+        });
+        label.appendChild(input);
+        label.appendChild(document.createTextNode(t.label));
+        row.appendChild(label);
+      });
+      timeGrid.appendChild(row);
+    });
+  }
+
+  nameSelect.addEventListener("change", async () => {
+    const id = nameSelect.value;
+    if (!id) {
+      formBody.hidden = true;
+      currentPerson = null;
+      return;
+    }
+    currentPerson = ROSTER.find((p) => p.id === id);
+    formState = blankState();
+    formStatus.textContent = "";
+    warnMsg.hidden = true;
+    noteInput.value = "";
+    passCheckbox.checked = false;
+
+    if (db) {
+      try {
+        const snap = await db.doc("responses/" + id).get();
+        if (snap.exists) {
+          const data = snap.data();
+          DAYS.forEach((d) => {
+            const entry = data.days && data.days[d.key];
+            if (entry) {
+              (entry.modes || []).forEach((m) => (formState[d.key][m] = true));
+              (entry.times || []).forEach((t) => (formState[d.key][t] = true));
+            }
+          });
+          noteInput.value = data.note || "";
+          passCheckbox.checked = !!data.pass;
+        }
+      } catch (e) {
+        // no existing response yet, or a transient read error — start blank
+      }
+    }
+
+    formBody.hidden = false;
+    renderDayModeGrid();
+    renderTimeGrid();
+    updateAvailabilityVisibility();
+  });
+
+  function updateAvailabilityVisibility() {
+    availabilitySteps.hidden = passCheckbox.checked;
+    warnMsg.hidden = true;
+  }
+
+  passCheckbox.addEventListener("change", updateAvailabilityVisibility);
+
+  submitBtn.addEventListener("click", async () => {
+    if (!currentPerson) return;
+    const passed = passCheckbox.checked;
+
+    if (!passed) {
+      const missing = DAYS.filter(
+        (d) => dayIncluded(d.key) && !formState[d.key].am && !formState[d.key].pm
+      );
+      if (missing.length > 0) {
+        warnMsg.hidden = false;
+        warnMsg.textContent =
+          "請幫「" + missing.map((d) => d.label).join("、") + "」選上午或下午。";
+        return;
+      }
+    }
+    warnMsg.hidden = true;
+
+    const days = {};
+    if (!passed) {
+      DAYS.forEach((d) => {
+        if (!dayIncluded(d.key)) return;
+        const modes = MODES.filter((m) => formState[d.key][m.key]).map((m) => m.key);
+        const times = TIMES.filter((t) => formState[d.key][t.key]).map((t) => t.key);
+        days[d.key] = { modes, times };
+      });
+    }
+
+    if (!db) {
+      formStatus.textContent = "目前無法連線,請稍後再試。";
+      formStatus.className = "status-msg";
+      return;
+    }
+
+    submitBtn.disabled = true;
+    try {
+      await db.doc("responses/" + currentPerson.id).set({
+        name: currentPerson.name,
+        pass: passed,
+        days,
+        note: noteInput.value.trim(),
+        updatedAt: new Date().toISOString(),
+      });
+      formStatus.textContent = "已送出,上面的結果會即時更新。";
+      formStatus.className = "status-msg ok";
+    } catch (e) {
+      formStatus.textContent = "送出失敗,請再試一次。";
+      formStatus.className = "status-msg";
+    } finally {
+      submitBtn.disabled = false;
+    }
+  });
+
+  function showResetStatus(text) {
+    resetFabStatus.textContent = text;
+    resetFabStatus.hidden = false;
+    clearTimeout(showResetStatus._t);
+    showResetStatus._t = setTimeout(() => {
+      resetFabStatus.hidden = true;
+    }, 3000);
+  }
+
+  let resetArmed = false;
+
+  function disarmReset() {
+    resetArmed = false;
+    resetActionBtn.textContent = "重置本週資料";
+    resetActionBtn.classList.remove("armed");
+    clearTimeout(disarmReset._t);
+  }
+
+  function renderNotes(docs) {
+    const withNotes = docs.filter((d) => d && d.note && d.note.trim());
+    notesEmpty.hidden = withNotes.length > 0;
+    notesList.innerHTML = "";
+    withNotes.forEach((d) => {
+      const li = document.createElement("li");
+      const name = document.createElement("span");
+      name.className = "note-name";
+      name.textContent = d.name + "：";
+      const text = document.createElement("span");
+      text.className = "note-text";
+      text.textContent = d.note.trim();
+      li.appendChild(name);
+      li.appendChild(text);
+      notesList.appendChild(li);
+    });
+  }
+
+  function openResetModal() {
+    resetModalStatus.textContent = "";
+    adminStatus.textContent = "";
+    resetPassInput.value = "";
+    disarmReset();
+    adminLockStep.hidden = false;
+    adminPanelStep.hidden = true;
+    resetModal.hidden = false;
+    resetPassInput.focus();
+  }
+
+  function closeResetModal() {
+    resetModal.hidden = true;
+    disarmReset();
+  }
+
+  resetFab.addEventListener("click", () => {
+    if (!db) {
+      showResetStatus("目前無法連線,請重新整理頁面再試。");
+      return;
+    }
+    openResetModal();
+  });
+
+  resetCancelBtn.addEventListener("click", closeResetModal);
+  adminCloseBtn.addEventListener("click", closeResetModal);
+
+  resetModal.addEventListener("click", (e) => {
+    if (e.target === resetModal) closeResetModal();
+  });
+
+  resetPassInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") resetConfirmBtn.click();
+  });
+
+  resetConfirmBtn.addEventListener("click", () => {
+    if (resetPassInput.value !== RESET_PASSWORD) {
+      resetModalStatus.textContent = "密碼錯誤,請再試一次。";
+      return;
+    }
+    renderNotes(latestSnapshotDocs);
+    adminLockStep.hidden = true;
+    adminPanelStep.hidden = false;
+  });
+
+  resetActionBtn.addEventListener("click", async () => {
+    if (!resetArmed) {
+      resetArmed = true;
+      resetActionBtn.textContent = "確定嗎?再按一次清空";
+      resetActionBtn.classList.add("armed");
+      disarmReset._t = setTimeout(disarmReset, 4000);
+      return;
+    }
+    disarmReset();
+    resetActionBtn.disabled = true;
+    adminStatus.textContent = "重置中…";
+    try {
+      const snap = await db.collection("responses").get();
+      for (const doc of snap.docs) {
+        await db.collection("responses").doc(doc.id).delete();
+      }
+      adminStatus.textContent = "已重置,所有人可以重新填寫。";
+    } catch (e) {
+      adminStatus.textContent = "重置失敗,請再試一次。";
+    } finally {
+      resetActionBtn.disabled = false;
+    }
+  });
+
+  function slotLabel(dayKey, timeKey, modeKey) {
+    const day = DAYS.find((d) => d.key === dayKey).label;
+    const time = TIMES.find((t) => t.key === timeKey).label;
+    const mode = MODES.find((m) => m.key === modeKey).label;
+    return day + "・" + time + "・" + mode;
+  }
+
+  function heroSlotLabel(dayKey, timeKey) {
+    const day = DAYS.find((d) => d.key === dayKey).label;
+    const time = TIMES.find((t) => t.key === timeKey).label;
+    return day + "・" + time;
+  }
+
+  function computeCounts(docs) {
+    const counts = {};
+    DAYS.forEach((d) =>
+      TIMES.forEach((t) =>
+        MODES.forEach((m) => {
+          counts[d.key + "|" + t.key + "|" + m.key] = 0;
+        })
+      )
+    );
+    docs.forEach((data) => {
+      if (!data || !data.days) return;
+      DAYS.forEach((d) => {
+        const entry = data.days[d.key];
+        if (!entry) return;
+        (entry.times || []).forEach((t) => {
+          (entry.modes || []).forEach((m) => {
+            const key = d.key + "|" + t + "|" + m;
+            if (key in counts) counts[key] += 1;
+          });
+        });
+      });
+    });
+    return counts;
+  }
+
+  function renderResults(docs) {
+    const counts = computeCounts(docs);
+    const total = docs.length;
+    const onsiteKeys = Object.keys(counts).filter((k) => k.endsWith("|onsite"));
+    const maxOnsite = Math.max(0, ...onsiteKeys.map((k) => counts[k]));
+    const maxCount = Math.max(0, ...Object.values(counts));
+
+    heroBody.innerHTML = "";
+    if (total === 0) {
+      const p = document.createElement("p");
+      p.className = "hero-empty";
+      p.textContent = "尚無人填寫,等待大家勾選時間。";
+      heroBody.appendChild(p);
+    } else if (maxOnsite === 0) {
+      const p = document.createElement("p");
+      p.className = "hero-empty";
+      p.textContent = "目前還沒有人可以實體出席。";
+      heroBody.appendChild(p);
+    } else {
+      const slotsWrap = document.createElement("div");
+      slotsWrap.className = "hero-slots";
+      onsiteKeys
+        .filter((k) => counts[k] === maxOnsite)
+        .forEach((k) => {
+          const [dayKey, timeKey] = k.split("|");
+          const onlineCount = counts[dayKey + "|" + timeKey + "|online"] || 0;
+          const el = document.createElement("span");
+          el.className = "hero-slot";
+          let html =
+            '<span class="main">' +
+            heroSlotLabel(dayKey, timeKey) +
+            ' <span class="n">' +
+            maxOnsite +
+            " 人</span></span>";
+          if (onlineCount > 0) {
+            html +=
+              '<span class="also-online">同時段線上另有 <span class="n">' +
+              onlineCount +
+              " 人</span>可以</span>";
+          }
+          el.innerHTML = html;
+          slotsWrap.appendChild(el);
+        });
+      heroBody.appendChild(slotsWrap);
+    }
+    const meta = document.createElement("p");
+    meta.className = "hero-meta";
+    meta.textContent = "已有 " + total + " / " + ROSTER.length + " 人填寫";
+    heroBody.appendChild(meta);
+
+    breakdownGrid.innerHTML = "";
+    DAYS.forEach((d) => {
+      const card = document.createElement("div");
+      card.className = "day-card";
+      const title = document.createElement("p");
+      title.className = "day-title";
+      title.textContent = d.label;
+      card.appendChild(title);
+
+      const grid = document.createElement("div");
+      grid.className = "cell-grid";
+      grid.appendChild(document.createElement("span"));
+      MODES.forEach((m) => {
+        const h = document.createElement("span");
+        h.className = "col-head";
+        h.textContent = m.label;
+        grid.appendChild(h);
+      });
+      TIMES.forEach((t) => {
+        const rh = document.createElement("span");
+        rh.className = "row-head";
+        rh.textContent = t.label;
+        grid.appendChild(rh);
+        MODES.forEach((m) => {
+          const key = d.key + "|" + t.key + "|" + m.key;
+          const c = counts[key];
+          const cell = document.createElement("span");
+          cell.className = "cell" + (maxCount > 0 && c === maxCount ? " is-top" : "");
+          cell.textContent = c;
+          grid.appendChild(cell);
+        });
+      });
+      card.appendChild(grid);
+      breakdownGrid.appendChild(card);
+    });
+
+    if (!adminPanelStep.hidden) renderNotes(docs);
+  }
+
+  function init() {
+    if (typeof firebase === "undefined") {
+      dbBanner.hidden = false;
+      dbBanner.textContent = "無法載入資料庫元件,請檢查網路連線後重新整理。";
+      renderResults([]);
+      return;
+    }
+    try {
+      firebase.initializeApp(FIREBASE_CONFIG);
+      db = firebase.firestore();
+    } catch (e) {
+      dbBanner.hidden = false;
+      dbBanner.textContent = "資料庫初始化失敗,請重新整理頁面。";
+      renderResults([]);
+      return;
+    }
+    db.collection("responses").onSnapshot(
+      (snap) => {
+        latestSnapshotDocs = snap.docs.map((d) => d.data());
+        renderResults(latestSnapshotDocs);
+      },
+      (err) => {
+        dbBanner.hidden = false;
+        dbBanner.textContent = "即時同步發生問題(" + err.code + "),請重新整理頁面。";
+      }
+    );
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
